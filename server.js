@@ -1,28 +1,31 @@
-import express from "express";
-import dotenv from "dotenv";
-import { OpenAI } from "openai";
+const fetch = require('node-fetch');
+require('dotenv').config();
 
-dotenv.config();
-
-const app = express();
-app.use(express.json());
-
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
-
-app.post("/chat", async (req, res) => {
-  const { message } = req.body;
+app.post('/chat', async (req, res) => {
+  const userMessage = req.body.message;
 
   try {
-    const chatResponse = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo",
-      messages: [{ role: "user", content: message }],
+    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: "openai/gpt-3.5-turbo", // or try another like 'mistralai/mistral-7b-instruct'
+        messages: [{ role: "user", content: userMessage }]
+      }),
     });
 
-    res.json({ reply: chatResponse.choices[0].message.content });
+    const data = await response.json();
+
+    if (data.choices && data.choices[0]) {
+      res.json({ reply: data.choices[0].message.content });
+    } else {
+      res.status(500).json({ error: "Invalid response from OpenRouter" });
+    }
   } catch (error) {
-    console.error("❌ Error fetching AI response:", error);
+    console.error("Error fetching AI response:", error.message);
     res.status(500).json({ error: "Error fetching AI response" });
   }
 });
