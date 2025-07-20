@@ -16,7 +16,7 @@ app.post('/chat', async (req, res) => {
     const response = await axios.post(
       `${process.env.OPENAI_API_BASE}/chat/completions`,
       {
-        model: process.env.MODEL,
+        model: "mistralai/mistral-7b-instruct",
         messages: [{ role: 'user', content: message }],
       },
       {
